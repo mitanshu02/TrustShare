@@ -21,7 +21,15 @@ TrustShare uses Role-Based Access Control (RBAC).
 |---|---|
 | Admin | Manage users, view audit logs, monitor system activity |
 | User | Upload, manage, and share their own files |
-| Recipient | Access only files explicitly shared with them |
+
+### Note on "Recipient"
+
+Recipient is **not** a stored system role. The `users.role` column only ever contains `admin` or `user`. "Recipient" describes a file-access state, not a database role:
+
+- A registered user becomes a recipient of a file through a `file_permissions` record (direct `view` or `download` access granted by the owner).
+- An unregistered person may access a file only through a public/temporary share link, and only while that link's token, expiry, and restrictions permit it.
+
+Do not add `recipient` to the `users.role` enum/constraint.
 
 The backend validates file ownership, user permissions, link status, and expiry before allowing access.
 
