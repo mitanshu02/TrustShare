@@ -29,9 +29,6 @@ class ShareLink(Base):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
 
-    # Only the hash of the share token is ever stored. The raw token is
-    # generated at request time and returned to the user once; it is
-    # never persisted. See docs/security-design.md.
     token_hash: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
 
     access_level: Mapped[str] = mapped_column(String(20), nullable=False)

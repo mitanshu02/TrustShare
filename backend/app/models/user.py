@@ -18,9 +18,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
 
-    # Only "admin" or "user". "Recipient" is an access state (via
-    # file_permissions / share_links), not a stored role. See
-    # docs/security-design.md.
+    
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="user")
 
     account_status: Mapped[str] = mapped_column(

@@ -53,9 +53,6 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
     except InvalidTokenError:
         return None
 
-
-# --- One-time passwords (forgot-password flow) ---
-
 def generate_otp() -> str:
     """Generate a random 6-digit numeric OTP using a CSPRNG."""
     return f"{secrets.randbelow(1_000_000):06d}"

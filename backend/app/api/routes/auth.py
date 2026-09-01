@@ -72,12 +72,9 @@ def read_current_user(current_user: User = Depends(get_current_user)) -> User:
 def forgot_password(
     payload: ForgotPasswordRequest, db: Session = Depends(get_db)
 ) -> MessageResponse:
-    """
-    Request a password-reset OTP.
+    
+   # Request a password-reset OTP.
 
-    Always returns the same generic message whether or not the email is
-    registered, to avoid leaking which emails have accounts.
-    """
     user = get_user_by_email(db, payload.email)
 
     if user is not None:

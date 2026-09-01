@@ -9,13 +9,7 @@ from app.db.session import Base
 
 
 class PasswordResetOTP(Base):
-    """
-    One-time password used for the forgot-password flow.
-
-    Only a hash of the OTP is ever stored, mirroring how share_links stores
-    only token_hash. The raw 6-digit code is generated at request time and
-    never persisted. See docs/security-design.md.
-    """
+    
 
     __tablename__ = "password_reset_otps"
 

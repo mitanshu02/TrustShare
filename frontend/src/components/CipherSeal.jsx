@@ -1,6 +1,6 @@
 import "./CipherSeal.css";
 
-const GRID_SIZE = 36; // 6x6 grid of cipher blocks
+const GRID_SIZE = 36; 
 
 export default function CipherSeal() {
   const blocks = Array.from({ length: GRID_SIZE }, (_, i) => i);

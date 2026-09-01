@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On first load, if a token exists, try to restore the session.
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
 
@@ -20,7 +19,7 @@ export function AuthProvider({ children }) {
         const currentUser = await fetchCurrentUser();
         setUser(currentUser);
       } catch {
-        // Token is invalid/expired — clear it.
+        // Token is invalid/expired then clear it.
         localStorage.removeItem(TOKEN_KEY);
         setUser(null);
       }
@@ -39,7 +38,6 @@ export function AuthProvider({ children }) {
 
   async function register({ fullName, email, password }) {
     await registerUser({ fullName, email, password });
-    // Registration succeeded; log the user in immediately for a smooth flow.
     return login({ email, password });
   }
 

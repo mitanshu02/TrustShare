@@ -17,8 +17,6 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # --- Database ---
-    # Required. Example (local dev):
-    # postgresql+psycopg://trustshare_user:<password>@localhost:5432/trustshare_db
     DATABASE_URL: str
 
     # --- Auth / JWT ---

@@ -43,8 +43,7 @@ export default function Dashboard() {
         </svg>
         <h1>Nothing here yet</h1>
         <p>
-          Once file uploads are wired up, everything you add will be
-          encrypted and listed here, sorted and searchable by folder.
+          Loading....
         </p>
         <button className="dashboard__upload-btn" disabled>
           Upload a file

@@ -41,14 +41,7 @@ def create_otp(db: Session, user_id: uuid.UUID) -> str:
 
 
 def verify_and_consume_otp(db: Session, user_id: uuid.UUID, submitted_otp: str) -> bool:
-    """
-    Check the submitted OTP against the most recent unused, unexpired OTP
-    for this user. On success, marks it used (single use). On failure,
-    increments the attempt counter for whichever record was checked, and
-    locks it out once OTP_MAX_ATTEMPTS is reached.
-
-    Returns True if the OTP was valid and has now been consumed.
-    """
+  
     now = datetime.now(timezone.utc)
 
     record = (
