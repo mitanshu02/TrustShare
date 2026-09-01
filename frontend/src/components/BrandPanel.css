@@ -1,0 +1,60 @@
+.brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  padding: 3rem;
+  background: var(--ink);
+  background-image: radial-gradient(
+    circle at 15% 15%,
+    rgba(201, 151, 76, 0.06),
+    transparent 45%
+  );
+}
+
+.brand-panel__mark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.15rem;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.brand-panel__visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.brand-panel__copy {
+  max-width: 30ch;
+}
+
+.brand-panel__headline {
+  font-size: 2rem;
+  line-height: 1.2;
+  margin-bottom: 0.85rem;
+}
+
+.brand-panel__body {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+@media (max-width: 900px) {
+  .brand-panel {
+    padding: 2rem 1.5rem;
+  }
+
+  .brand-panel__visual {
+    transform: scale(0.75);
+    flex: none;
+    margin: 0.5rem 0;
+  }
+
+  .brand-panel__headline {
+    font-size: 1.5rem;
+  }
+}

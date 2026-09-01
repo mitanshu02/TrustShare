@@ -10,3 +10,4 @@ from app.models.file_version import FileVersion
 from app.models.file_permission import FilePermission  
 from app.models.share_link import ShareLink  
 from app.models.download import Download  
+from app.models.password_reset_otp import PasswordResetOTP

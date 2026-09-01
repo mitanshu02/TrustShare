@@ -25,3 +25,11 @@ def create_user(db: Session, user_in: UserCreate) -> User:
     db.commit()
     db.refresh(user)
     return user
+
+
+def update_password(db: Session, user: User, new_plain_password: str) -> User:
+    user.password_hash = hash_password(new_plain_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user

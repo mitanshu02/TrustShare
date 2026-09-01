@@ -1,12 +1,13 @@
 """
-Password hashing and JWT helpers.
+Password hashing, JWT, and one-time-password (OTP) helpers.
 
-- Passwords are hashed with bcrypt. Plaintext passwords are never stored
-  or logged.
+- Passwords and OTPs are both hashed with bcrypt before storage. Neither
+  plaintext passwords nor raw OTP codes are ever stored or logged.
 - JWT access tokens are signed with JWT_SECRET_KEY (HS256 by default).
   See docs/security-design.md.
 """
 
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -34,21 +35,10 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
 
 
 def create_access_token(subject: str, extra_claims: dict[str, Any] | None = None) -> str:
-    """
-    Create a signed JWT access token.
-
-    `subject` should be the user's id (as a string) — the standard "sub"
-    claim. Additional non-sensitive claims (e.g. role) may be included via
-    extra_claims, but never put secrets or raw tokens in the payload.
-    """
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    payload: dict[str, Any] = {
-        "sub": subject,
-        "iat": now,
-        "exp": expire,
-    }
+    payload: dict[str, Any] = {"sub": subject, "iat": now, "exp": expire}
     if extra_claims:
         payload.update(extra_claims)
 
@@ -56,15 +46,26 @@ def create_access_token(subject: str, extra_claims: dict[str, Any] | None = None
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:
-    """
-    Decode and validate a JWT access token.
-
-    Returns the payload dict if valid, or None if the token is invalid,
-    malformed, or expired.
-    """
     try:
         return jwt.decode(
             token, settings.JWT_SECRET_KEY, algorithms=[settings.JWT_ALGORITHM]
         )
     except InvalidTokenError:
         return None
+
+
+# --- One-time passwords (forgot-password flow) ---
+
+def generate_otp() -> str:
+    """Generate a random 6-digit numeric OTP using a CSPRNG."""
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+def hash_otp(otp: str) -> str:
+    """Hash an OTP for storage, same approach as password hashing."""
+    return hash_password(otp)
+
+
+def verify_otp(otp: str, otp_hash: str) -> bool:
+    """Check a plaintext OTP against a stored bcrypt hash."""
+    return verify_password(otp, otp_hash)

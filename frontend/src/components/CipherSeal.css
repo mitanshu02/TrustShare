@@ -1,0 +1,97 @@
+.cipher-seal {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cipher-seal__grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 6px;
+  width: 100%;
+  height: 100%;
+}
+
+.cipher-seal__block {
+  border-radius: 3px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  animation: cipher-flicker 4.8s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes cipher-flicker {
+  0%,
+  100% {
+    background: var(--surface-raised);
+    border-color: var(--border);
+  }
+  35% {
+    background: var(--teal-soft);
+    border-color: var(--teal);
+  }
+  55% {
+    background: var(--gold-soft);
+    border-color: var(--gold-border);
+  }
+  75% {
+    background: var(--surface-raised);
+    border-color: var(--border);
+  }
+}
+
+.cipher-seal__lock {
+  position: absolute;
+  width: 76px;
+  height: 76px;
+  filter: drop-shadow(0 0 18px rgba(201, 151, 76, 0.25));
+}
+
+.cipher-seal__lock-body {
+  fill: var(--ink);
+  stroke: var(--gold);
+  stroke-width: 2.5;
+}
+
+.cipher-seal__lock-shackle {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.cipher-seal__lock-pin {
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  fill: var(--gold);
+  animation: cipher-pin-pulse 4.8s ease-in-out infinite;
+}
+
+@keyframes cipher-pin-pulse {
+  0%,
+  60% {
+    opacity: 0.5;
+  }
+  75%,
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cipher-seal__block {
+    animation: none;
+    background: var(--surface-raised);
+  }
+  .cipher-seal__lock-pin {
+    animation: none;
+    opacity: 1;
+  }
+}
