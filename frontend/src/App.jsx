@@ -1,6 +1,10 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Dashboard from "./pages/Dashboard";
+import DashboardLayout from "./layouts/DashboardLayout";
+import Activity from "./pages/dashboard/Activity";
+import MyFiles from "./pages/dashboard/MyFiles";
+import SharedWithMe from "./pages/dashboard/SharedWithMe";
+import Statistics from "./pages/dashboard/Statistics";
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -18,10 +22,15 @@ function App() {
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <DashboardLayout />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<MyFiles />} />
+        <Route path="shared" element={<SharedWithMe />} />
+        <Route path="activity" element={<Activity />} />
+        <Route path="stats" element={<Statistics />} />
+      </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

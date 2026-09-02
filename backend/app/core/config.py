@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    
+    # Local stand-in for encrypted object storage (S3/Azure Blob) until
+    # Milestone 2 wires up real cloud storage. Holds ciphertext only —
+    # files are AES-256-GCM encrypted before ever being written here.
+    STORAGE_DIR: str = "./storage"
 
     model_config = SettingsConfigDict(
         env_file="../.env",  # repo root .env, one level up from backend/
