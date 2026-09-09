@@ -16,6 +16,14 @@ def get_user_by_id(db: Session, user_id: uuid.UUID) -> User | None:
     return db.query(User).filter(User.id == user_id).first()
 
 
+def count_active_admins(db: Session) -> int:
+    return (
+        db.query(func.count(User.id))
+        .filter(User.role == "admin", User.account_status == "active")
+        .scalar()
+        or 0
+    )
+
 def update_user_status(db: Session, user: User, account_status: str) -> User:
     user.account_status = account_status
     db.add(user)

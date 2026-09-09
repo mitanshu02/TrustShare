@@ -7,6 +7,7 @@ from app.api.deps import require_admin
 from app.core.security import verify_password
 from app.crud.admin import (
     change_user_role,
+    count_active_admins,
     get_platform_stats,
     get_user_by_id,
     list_all_files,
@@ -51,6 +52,16 @@ def update_user_status_endpoint(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Admins cannot change their own account status",
         )
+    if (
+        target.role == "admin"
+        and target.account_status == "active"
+        and payload.account_status != "active"
+        and count_active_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot deactivate the last active admin — this would lock everyone out of admin access.",
+        )
     return update_user_status(db, target, payload.account_status)
 
 
@@ -68,7 +79,6 @@ def platform_stats_endpoint(
     db: Session = Depends(get_db),
 ) -> PlatformStatsOut:
     return PlatformStatsOut(**get_platform_stats(db))
-
 
 
 @router.patch("/users/{user_id}/role", response_model=AdminUserOut)
@@ -98,6 +108,16 @@ def change_user_role_endpoint(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"User already has role '{payload.new_role}'",
+        )
+    if (
+        target.role == "admin"
+        and payload.new_role == "user"
+        and target.account_status == "active"
+        and count_active_admins(db) <= 1
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot remove the last active admin — this would lock everyone out of admin access.",
         )
 
     return change_user_role(db, target, payload.new_role, admin)
