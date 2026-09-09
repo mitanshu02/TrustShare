@@ -12,3 +12,4 @@ from app.models.share_link import ShareLink
 from app.models.download import Download  
 from app.models.password_reset_otp import PasswordResetOTP
 from app.models.file_encryption_key import FileEncryptionKey
+from app.models.role_change_audit import RoleChangeAudit

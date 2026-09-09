@@ -45,3 +45,15 @@ def get_current_user(
         )
 
     return user
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Guards admin-only endpoints. Any authenticated user reaches
+    get_current_user first; this adds the role check on top.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required",
+        )
+    return current_user

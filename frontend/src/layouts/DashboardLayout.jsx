@@ -60,15 +60,33 @@ function StatsIcon() {
   );
 }
 
+function AdminIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none">
+      <path
+        d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3Z"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
+
+  const navItems =
+    user?.role === "admin"
+      ? [...NAV_ITEMS, { to: "/dashboard/admin", label: "Admin", icon: AdminIcon }]
+      : NAV_ITEMS;
 
   return (
     <div className="dash-layout">
       <aside className="dash-sidebar">
         <div className="dash-sidebar__mark">TrustShare</div>
         <nav className="dash-sidebar__nav">
-          {NAV_ITEMS.map(({ to, label, end, icon: Icon }) => (
+          {navItems.map(({ to, label, end, icon: Icon }) => (
             <NavLink
               key={to}
               to={to}

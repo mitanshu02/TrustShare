@@ -1,0 +1,107 @@
+.role-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 20, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 1rem;
+}
+
+.role-modal {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.role-modal h3 {
+  font-size: 1.05rem;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.role-modal__name {
+  color: var(--gold);
+}
+
+.role-modal__warning {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1.25rem;
+}
+
+.role-modal__error {
+  background: var(--danger-soft);
+  border: 1px solid var(--danger-border);
+  color: #e79684;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.role-modal__label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.4rem;
+}
+
+.role-modal input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  margin-bottom: 1.25rem;
+}
+
+.role-modal input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+
+.role-modal__actions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+.role-modal__cancel {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.role-modal__confirm {
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.role-modal__confirm--danger {
+  background: var(--danger);
+  color: white;
+}
+
+.role-modal__confirm:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

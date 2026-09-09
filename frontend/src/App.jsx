@@ -1,7 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import AdminRoute from "./components/AdminRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Activity from "./pages/dashboard/Activity";
+import Admin from "./pages/dashboard/Admin";
 import MyFiles from "./pages/dashboard/MyFiles";
 import SharedWithMe from "./pages/dashboard/SharedWithMe";
 import Statistics from "./pages/dashboard/Statistics";
@@ -30,6 +32,14 @@ function App() {
         <Route path="shared" element={<SharedWithMe />} />
         <Route path="activity" element={<Activity />} />
         <Route path="stats" element={<Statistics />} />
+        <Route
+          path="admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
