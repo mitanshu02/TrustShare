@@ -1,0 +1,74 @@
+.public-share {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink);
+  padding: 1.5rem;
+}
+
+.public-share__card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+}
+
+.public-share__mark {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin-bottom: 2rem;
+}
+
+.public-share__icon {
+  width: 48px;
+  height: 48px;
+  color: var(--gold);
+  margin: 0 auto 1.25rem;
+}
+
+.public-share__icon--error {
+  color: var(--danger);
+}
+
+.public-share h1 {
+  font-size: 1.15rem;
+  margin-bottom: 0.5rem;
+  word-break: break-word;
+}
+
+.public-share__muted {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.public-share__download-btn {
+  margin-top: 1.5rem;
+  width: 100%;
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.public-share__download-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.public-share__view-only {
+  margin-top: 1.5rem;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}

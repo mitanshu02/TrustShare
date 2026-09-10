@@ -6,6 +6,7 @@ from app.api.routes.admin import router as admin_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.files import router as files_router
 from app.api.routes.folders import router as folders_router
+from app.api.routes.share_links import router as share_links_router
 from app.api.routes.stats import router as stats_router
 
 app = FastAPI(title="TrustShare API")
@@ -24,6 +25,7 @@ app.include_router(files_router)
 app.include_router(activity_router)
 app.include_router(stats_router)
 app.include_router(admin_router)
+app.include_router(share_links_router)
 
 
 @app.get("/health")

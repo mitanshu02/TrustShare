@@ -164,3 +164,94 @@
 .share-modal__revoke:hover {
   background: var(--danger-soft);
 }
+
+
+.share-modal__tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.share-modal__tabs button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.5rem 0.25rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-right: 1rem;
+}
+
+.share-modal__tabs button.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+}
+
+.share-modal__link-created {
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-border);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.82rem;
+}
+
+.share-modal__link-created p {
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.share-modal__link-row {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.share-modal__link-row input {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.share-modal__link-row button {
+  background: var(--gold);
+  color: var(--ink);
+  border: none;
+  border-radius: 6px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.share-modal__inline-label {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  align-self: center;
+  white-space: nowrap;
+}
+
+
+.share-modal__copy-btn--copied {
+  background: var(--teal) !important;
+  animation: copy-pop 0.25s ease;
+}
+
+@keyframes copy-pop {
+  0% {
+    transform: scale(0.92);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

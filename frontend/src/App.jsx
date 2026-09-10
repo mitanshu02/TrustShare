@@ -9,9 +9,9 @@ import SharedWithMe from "./pages/dashboard/SharedWithMe";
 import Statistics from "./pages/dashboard/Statistics";
 import ForgotPassword from "./pages/ForgotPassword";
 import Login from "./pages/Login";
+import PublicShare from "./pages/PublicShare";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
-
 function App() {
   return (
     <Routes>
@@ -20,6 +20,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/share/:token" element={<PublicShare />} />
       <Route
         path="/dashboard"
         element={

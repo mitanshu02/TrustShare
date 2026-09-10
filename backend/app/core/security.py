@@ -7,6 +7,7 @@ Password hashing, JWT, and one-time-password (OTP) helpers.
   See docs/security-design.md.
 """
 
+import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -66,3 +67,23 @@ def hash_otp(otp: str) -> str:
 def verify_otp(otp: str, otp_hash: str) -> bool:
     """Check a plaintext OTP against a stored bcrypt hash."""
     return verify_password(otp, otp_hash)
+
+
+# --- Share link tokens ---
+#
+# Unlike passwords and OTPs (low-entropy, human-chosen, need a slow hash
+# to resist brute-forcing), a share token is 256 bits of CSPRNG output
+# with essentially no brute-force risk. Bcrypt also can't be looked up by
+# value (each hash has a random salt), so a public GET /api/share/{token}
+# request would otherwise require iterating every row to find a match.
+# SHA-256 is deterministic (allows a direct WHERE token_hash = ... query),
+# fast, and entirely appropriate for hashing high-entropy random tokens.
+# This mirrors how most real systems hash API keys.
+
+
+def generate_share_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def hash_share_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
