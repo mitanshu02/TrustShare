@@ -48,6 +48,22 @@ export async function downloadFile(fileId, fileName) {
   window.URL.revokeObjectURL(url);
 }
 
+
+/**
+ * Fetches a file for inline preview and returns a blob object URL the
+ * caller can pass to an <img> or <iframe>. Unlike downloadFile, this
+ * doesn't trigger a save dialog. The caller is responsible for calling
+ * URL.revokeObjectURL on the returned url when done with it.
+ */
+export async function previewFile(fileId) {
+  const response = await apiClient.get(`/api/files/${fileId}/preview`, {
+    responseType: "blob",
+  });
+  const contentType = response.data.type;
+  const url = window.URL.createObjectURL(response.data);
+  return { url, contentType };
+}
+
 export async function deleteFile(fileId) {
   await apiClient.delete(`/api/files/${fileId}`);
 }
@@ -89,5 +105,11 @@ export async function getActivity() {
 
 export async function getStats() {
   const response = await apiClient.get("/api/stats");
+  return response.data;
+}
+
+
+export async function rotateFileKey(fileId) {
+  const response = await apiClient.post(`/api/files/${fileId}/rotate-key`);
   return response.data;
 }

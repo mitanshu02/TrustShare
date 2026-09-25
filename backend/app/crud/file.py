@@ -94,6 +94,47 @@ def decrypt_file_contents(db: Session, file: File) -> bytes:
     encrypted_blob = read_encrypted_blob(file.storage_key)
     return decrypt_bytes(encrypted_blob, key)
 
+def rotate_file_key(db: Session, file: File) -> File:
+    """
+    Re-encrypts a file with a brand-new AES-256-GCM key: decrypts with
+    the current key, generates a fresh one, re-encrypts, uploads the new
+    ciphertext, updates the file's references, and removes the old
+    ciphertext and key material. See docs/security-design.md ("Periodic
+    key rotation improves security").
+    """
+    old_storage_key = file.storage_key
+    old_key_reference = file.encryption_key_reference
+
+    plaintext = decrypt_file_contents(db, file)
+
+    new_key = generate_key()
+    new_encrypted_blob = encrypt_bytes(plaintext, new_key)
+    new_storage_key = save_encrypted_blob(new_encrypted_blob)
+
+    new_key_record = FileEncryptionKey(key_material=encode_key(new_key))
+    db.add(new_key_record)
+    db.flush()
+
+    file.storage_key = new_storage_key
+    file.encryption_key_reference = str(new_key_record.id)
+    db.add(file)
+    db.commit()
+    db.refresh(file)
+
+    # Only remove the old ciphertext/key after the new one is safely
+    # committed, so a failure partway through never leaves a file
+    # unrecoverable.
+    delete_encrypted_blob(old_storage_key)
+    old_key_record = (
+        db.query(FileEncryptionKey)
+        .filter(FileEncryptionKey.id == uuid.UUID(old_key_reference))
+        .first()
+    )
+    if old_key_record is not None:
+        db.delete(old_key_record)
+        db.commit()
+
+    return file
 
 def record_download(db: Session, file_id: uuid.UUID, user_id: uuid.UUID | None) -> None:
     db.add(Download(file_id=file_id, user_id=user_id))

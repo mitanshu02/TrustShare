@@ -108,6 +108,29 @@ def public_link_info_endpoint(token: str, db: Session = Depends(get_db)) -> Publ
         shared_by_name=link.creator.full_name,
     )
 
+@router.get("/api/share/{token}/preview")
+def public_link_preview_endpoint(token: str, db: Session = Depends(get_db)):
+    """
+    Streams the file inline for in-browser viewing (image/PDF/text).
+    Unlike /download, this works for BOTH 'view' and 'download' links —
+    view-only means "can't save the file," not "can't see it" — and it
+    does not count against the link's download limit.
+    """
+    link = get_valid_link_by_token(db, token)
+    if link is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="This link is invalid, expired, or has been revoked.",
+        )
+
+    file = link.file
+    plaintext = decrypt_file_contents(db, file)
+
+    return StreamingResponse(
+        io.BytesIO(plaintext),
+        media_type=file.content_type,
+        headers={"Content-Disposition": f'inline; filename="{file.original_name}"'},
+    )
 
 @router.get("/api/share/{token}/download")
 def public_link_download_endpoint(token: str, db: Session = Depends(get_db)):

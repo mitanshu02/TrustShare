@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { API_BASE_URL } from "../api/client";
 import { downloadPublicShareLink, getPublicShareInfo } from "../api/shareLinks";
 import "./PublicShare.css";
 
@@ -13,6 +14,14 @@ function formatBytes(bytes) {
     unitIndex += 1;
   }
   return `${value.toFixed(1)} ${units[unitIndex]}`;
+}
+
+function isPreviewable(contentType) {
+  return (
+    contentType.startsWith("image/") ||
+    contentType === "application/pdf" ||
+    contentType.startsWith("text/")
+  );
 }
 
 export default function PublicShare() {
@@ -56,9 +65,12 @@ export default function PublicShare() {
     }
   }
 
+  const previewUrl = `${API_BASE_URL}/api/share/${token}/preview`;
+  const canPreview = info && isPreviewable(info.content_type);
+
   return (
     <div className="public-share">
-      <div className="public-share__card">
+      <div className={`public-share__card ${canPreview ? "public-share__card--wide" : ""}`}>
         <div className="public-share__mark">TrustShare</div>
 
         {loading ? (
@@ -74,14 +86,29 @@ export default function PublicShare() {
           </>
         ) : (
           <>
-            <svg className="public-share__icon" viewBox="0 0 24 24" fill="none">
-              <path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-              <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-            </svg>
+            {!canPreview && (
+              <svg className="public-share__icon" viewBox="0 0 24 24" fill="none">
+                <path d="M6 3h8l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+                <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+              </svg>
+            )}
             <h1>{info.original_name}</h1>
             <p className="public-share__muted">
               {formatBytes(info.size_bytes)} · shared by {info.shared_by_name}
             </p>
+
+            {canPreview && (
+              <div className="public-share__preview" onContextMenu={(e) => e.preventDefault()}>
+                {info.content_type.startsWith("image/") ? (
+                  <img src={previewUrl} alt={info.original_name} draggable="false" />
+                ) : (
+                  <iframe
+                    src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                    title={info.original_name}
+                  />
+                )}
+              </div>
+            )}
 
             {info.access_level === "download" ? (
               <button
@@ -93,7 +120,7 @@ export default function PublicShare() {
               </button>
             ) : (
               <p className="public-share__view-only">
-                The owner has only allowed viewing this file's details — downloading isn't enabled for this link.
+                The owner has only allowed viewing this file — downloading isn't enabled for this link.
               </p>
             )}
           </>

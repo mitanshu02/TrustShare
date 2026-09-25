@@ -15,6 +15,7 @@ from app.crud.file import (
     list_permissions,
     record_download,
     revoke_permission,
+    rotate_file_key,
     share_file,
     soft_delete_file,
     update_permission,
@@ -105,6 +106,28 @@ def shared_with_me_endpoint(
         for row in rows
     ]
 
+@router.get("/{file_id}/preview")
+def preview_file_endpoint(
+    file_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Streams the file inline for in-browser viewing. Unlike /download,
+    this is allowed for 'view' access too — view-only means "can't save
+    the file," not "can't see it" — and it is not logged as a download.
+    """
+    file, access = _require_file_and_access(
+        db, file_id, current_user, {"owner", "view", "download"}
+    )
+
+    plaintext = decrypt_file_contents(db, file)
+
+    return StreamingResponse(
+        io.BytesIO(plaintext),
+        media_type=file.content_type,
+        headers={"Content-Disposition": f'inline; filename="{file.original_name}"'},
+    )
 
 @router.get("/{file_id}/download")
 def download_file_endpoint(
@@ -133,6 +156,20 @@ def delete_file_endpoint(
     file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
     soft_delete_file(db, file)
 
+
+@router.post("/{file_id}/rotate-key", response_model=FileOut)
+def rotate_key_endpoint(
+    file_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> FileOut:
+    """
+    Re-encrypts the file with a brand-new AES-256-GCM key. Owner-only.
+    See docs/security-design.md ("Periodic key rotation improves
+    security").
+    """
+    file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
+    return rotate_file_key(db, file)
 
 @router.post("/{file_id}/share", response_model=ShareResult)
 def share_file_endpoint(

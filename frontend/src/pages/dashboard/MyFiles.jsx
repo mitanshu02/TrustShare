@@ -6,6 +6,7 @@ import {
   downloadFile,
   listFiles,
   listFolders,
+  rotateFileKey,
   uploadFile,
 } from "../../api/files";
 import "./MyFiles.css";
@@ -120,6 +121,23 @@ export default function MyFiles() {
       loadContents();
     } catch {
       setError("Couldn't delete that file.");
+    }
+  }
+
+  
+  async function handleRotateKey(file) {
+    if (
+      !window.confirm(
+        `Re-encrypt "${file.original_name}" with a brand-new key? The old key will be permanently destroyed.`,
+      )
+    ) {
+      return;
+    }
+    try {
+      await rotateFileKey(file.id);
+      setError("");
+    } catch {
+      setError("Couldn't rotate the encryption key for that file.");
     }
   }
 
@@ -260,6 +278,23 @@ export default function MyFiles() {
                           <path d="M8 10.8 16 7.2M8 13.2l8 3.6" stroke="currentColor" strokeWidth="1.6" />
                         </svg>
                       </button>
+
+                      <button
+                        className="myfiles__icon-btn"
+                        title="Rotate encryption key"
+                        onClick={() => handleRotateKey(file)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M17 4v4h-4M7 20v-4h4"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      
                       <button
                         className="myfiles__icon-btn myfiles__icon-btn--danger"
                         title="Delete"
