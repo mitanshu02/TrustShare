@@ -85,7 +85,7 @@ def revoke_link_endpoint(
     link = get_link_by_id(db, link_id)
     if link is None or link.file_id != file_id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found")
-    revoke_link(db, link)
+    revoke_link(db, link, revoked_by=current_user.id)
 
 
 # --- Public access (no authentication required) ---

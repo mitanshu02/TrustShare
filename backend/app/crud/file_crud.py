@@ -10,6 +10,7 @@ from app.models.file import File
 from app.models.file_encryption_key import FileEncryptionKey
 from app.models.file_permission import FilePermission
 from app.models.user import User
+from app.core.events import EventType, NotificationType
 from app.crud.monitoring import create_audit_event, create_notification
 
 def list_files_for_owner(
@@ -54,6 +55,21 @@ def upload_file(
     db.add(file_record)
     db.commit()
     db.refresh(file_record)
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.FILE_UPLOADED,
+        actor_user_id=owner_id,
+        entity_type="file",
+        entity_id=str(file_record.id),
+        severity="info",
+        event_metadata={
+            "file_name": original_name,
+            "size_bytes": file_record.size_bytes,
+            "content_type": content_type,
+        },
+    )
+
     return file_record
 
 
@@ -134,6 +150,16 @@ def rotate_file_key(db: Session, file: File) -> File:
         db.delete(old_key_record)
         db.commit()
 
+    create_audit_event(
+        db=db,
+        event_type=EventType.FILE_KEY_ROTATED,
+        actor_user_id=file.owner_id,
+        entity_type="file",
+        entity_id=str(file.id),
+        severity="info",
+        event_metadata={"file_name": file.original_name},
+    )
+
     return file
 
 def record_download(db: Session, file_id: uuid.UUID, user_id: uuid.UUID | None) -> None:
@@ -141,20 +167,49 @@ def record_download(db: Session, file_id: uuid.UUID, user_id: uuid.UUID | None) 
     db.commit()
     create_audit_event(
         db=db,
-        event_type="file_downloaded",
+        event_type=EventType.FILE_DOWNLOADED,
         actor_user_id=user_id,
         entity_type="file",
         entity_id=str(file_id),
         severity="info",
     )
 
+    file = db.query(File).filter(File.id == file_id).first()
+    if file is not None and file.owner_id != user_id:
+        downloader_email = None
+        if user_id is not None:
+            downloader = db.query(User).filter(User.id == user_id).first()
+            downloader_email = downloader.email if downloader else None
 
-def soft_delete_file(db: Session, file: File) -> None:
+        create_notification(
+            db=db,
+            user_id=file.owner_id,
+            notification_type=NotificationType.FILE_DOWNLOADED,
+            title="Your file was downloaded",
+            message=(
+                f"'{file.original_name}' was downloaded"
+                + (f" by {downloader_email}." if downloader_email else ".")
+            ),
+            link_url="/dashboard/activity",
+        )
+
+
+def soft_delete_file(db: Session, file: File, deleted_by: uuid.UUID) -> None:
     file.deleted_at = datetime.now(timezone.utc)
     db.add(file)
     db.commit()
     # Ciphertext is intentionally left on disk for now (soft delete, per
     # schema convention) rather than immediately erased.
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.FILE_DELETED,
+        actor_user_id=deleted_by,
+        entity_type="file",
+        entity_id=str(file.id),
+        severity="warning",
+        event_metadata={"file_name": file.original_name},
+    )
 
 
 def share_file(

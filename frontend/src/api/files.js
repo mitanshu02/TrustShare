@@ -113,3 +113,13 @@ export async function rotateFileKey(fileId) {
   const response = await apiClient.post(`/api/files/${fileId}/rotate-key`);
   return response.data;
 }
+
+export async function getStorageStats() {
+  const response = await apiClient.get("/api/files/storage-stats");
+  return response.data;
+}
+
+export async function getFileActivityReport(fileId) {
+  const response = await apiClient.get(`/api/files/${fileId}/activity-report`);
+  return response.data;
+}

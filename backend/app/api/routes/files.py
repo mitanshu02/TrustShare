@@ -21,6 +21,7 @@ from app.crud.file import (
     update_permission,
     upload_file,
 )
+from app.crud.monitoring import get_file_activity_report, get_storage_analytics
 from app.db.session import get_db
 from app.models.file_permission import FilePermission
 from app.models.user import User
@@ -61,6 +62,15 @@ def list_files_endpoint(
     db: Session = Depends(get_db),
 ) -> list[FileOut]:
     return list_files_for_owner(db, current_user.id, folder_id)
+
+
+@router.get("/storage-stats")
+def storage_stats_endpoint(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Slide 8: storage usage + breakdown by file type, for the caller's own files."""
+    return get_storage_analytics(db, current_user.id)
 
 
 @router.post("/upload", response_model=FileOut, status_code=status.HTTP_201_CREATED)
@@ -154,7 +164,7 @@ def delete_file_endpoint(
     db: Session = Depends(get_db),
 ) -> None:
     file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
-    soft_delete_file(db, file)
+    soft_delete_file(db, file, deleted_by=current_user.id)
 
 
 @router.post("/{file_id}/rotate-key", response_model=FileOut)
@@ -170,6 +180,21 @@ def rotate_key_endpoint(
     """
     file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
     return rotate_file_key(db, file)
+
+@router.get("/{file_id}/activity-report")
+def file_activity_report_endpoint(
+    file_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Slide 7: full audit trail for one file. Owner-only."""
+    file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
+    return {
+        "file_id": str(file.id),
+        "file_name": file.original_name,
+        "activity": get_file_activity_report(db, file_id),
+    }
+
 
 @router.post("/{file_id}/share", response_model=ShareResult)
 def share_file_endpoint(

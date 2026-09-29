@@ -12,6 +12,7 @@ import Login from "./pages/Login";
 import PublicShare from "./pages/PublicShare";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
+import Notifications from "./pages/dashboard/Notifications";
 function App() {
   return (
     <Routes>
@@ -32,6 +33,7 @@ function App() {
         <Route index element={<MyFiles />} />
         <Route path="shared" element={<SharedWithMe />} />
         <Route path="activity" element={<Activity />} />
+        <Route path="/dashboard/notifications" element={<Notifications />} />
         <Route path="stats" element={<Statistics />} />
         <Route
           path="admin"

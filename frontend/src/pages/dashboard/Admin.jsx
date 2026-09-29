@@ -7,6 +7,7 @@ import {
   listAllUsers,
   updateUserStatus,
 } from "../../api/admin";
+import { getSecurityAnalytics } from "../../api/monitoring";
 import "./Admin.css";
 
 function formatBytes(bytes) {
@@ -26,6 +27,7 @@ export default function Admin() {
   const [users, setUsers] = useState([]);
   const [files, setFiles] = useState([]);
   const [audit, setAudit] = useState([]);
+  const [security, setSecurity] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [roleModal, setRoleModal] = useState(null); // { user, newRole }
@@ -34,16 +36,18 @@ export default function Admin() {
     setLoading(true);
     setError("");
     try {
-      const [statsData, usersData, filesData, auditData] = await Promise.all([
+      const [statsData, usersData, filesData, auditData, securityData] = await Promise.all([
         getPlatformStats(),
         listAllUsers(),
         listAllFiles(),
         getRoleAudit(),
+        getSecurityAnalytics(),
       ]);
       setStats(statsData);
       setUsers(usersData);
       setFiles(filesData);
       setAudit(auditData);
+      setSecurity(securityData);
     } catch {
       setError("Couldn't load admin data.");
     } finally {
@@ -105,8 +109,59 @@ export default function Admin() {
             </div>
           )}
 
-          <p className="myfiles__section-label" style={{ marginTop: 0 }}>Users</p>
-          <table className="admin-table">
+          {security && (
+            <>
+              <p className="myfiles__section-label" style={{ marginTop: 0 }}>
+                Security (last 24 hours)
+              </p>
+              <div className="stats__grid" style={{ marginBottom: "1.5rem" }}>
+                <div className="stats__card">
+                  <span className="stats__value">{security.failed_logins_24h}</span>
+                  <span className="stats__label">Failed logins</span>
+                </div>
+                <div className="stats__card">
+                  <span className="stats__value">{security.suspicious_events_24h}</span>
+                  <span className="stats__label">Suspicious events</span>
+                </div>
+                <div className="stats__card">
+                  <span className="stats__value">{security.downloads_24h}</span>
+                  <span className="stats__label">Downloads</span>
+                </div>
+              </div>
+
+              {security.recent_high_severity_events.length > 0 && (
+                <>
+                  <p className="myfiles__section-label">Recent high-severity events</p>
+                  <table className="admin-table" style={{ marginBottom: "1.5rem" }}>
+                    <thead>
+                      <tr>
+                        <th>Event</th>
+                        <th>Severity</th>
+                        <th>IP address</th>
+                        <th>When</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {security.recent_high_severity_events.map((event) => (
+                        <tr key={event.id}>
+                          <td>{event.event_type.replaceAll("_", " ")}</td>
+                          <td>
+                            <span className={`admin-badge admin-badge--${event.severity === "critical" ? "inactive" : "active"}`}>
+                              {event.severity}
+                            </span>
+                          </td>
+                          <td>{event.ip_address || "—"}</td>
+                          <td>{new Date(event.created_at).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </>
+          )}
+
+          <p className="myfiles__section-label" style={{ marginTop: 0 }}>Users</p>          <table className="admin-table">
             <thead>
               <tr>
                 <th>Name</th>

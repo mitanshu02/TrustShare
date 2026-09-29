@@ -3,7 +3,9 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
+from app.core.events import EventType, NotificationType
 from app.core.security import generate_share_token, hash_share_token
+from app.crud.monitoring import create_audit_event, create_notification
 from app.models.download import Download
 from app.models.file import File
 from app.models.share_link import ShareLink
@@ -32,6 +34,22 @@ def create_share_link(
     db.add(link)
     db.commit()
     db.refresh(link)
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.SHARE_LINK_CREATED,
+        actor_user_id=created_by,
+        entity_type="file",
+        entity_id=str(file.id),
+        severity="info",
+        event_metadata={
+            "link_id": str(link.id),
+            "access_level": link.access_level,
+            "expires_at": link.expires_at.isoformat(),
+            "max_downloads": link.max_downloads,
+        },
+    )
+
     return link, raw_token
 
 
@@ -48,12 +66,23 @@ def get_link_by_id(db: Session, link_id: uuid.UUID) -> ShareLink | None:
     return db.query(ShareLink).filter(ShareLink.id == link_id).first()
 
 
-def revoke_link(db: Session, link: ShareLink) -> ShareLink:
+def revoke_link(db: Session, link: ShareLink, revoked_by: uuid.UUID) -> ShareLink:
     link.is_active = False
     link.revoked_at = datetime.now(timezone.utc)
     db.add(link)
     db.commit()
     db.refresh(link)
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.SHARE_LINK_REVOKED,
+        actor_user_id=revoked_by,
+        entity_type="file",
+        entity_id=str(link.file_id),
+        severity="info",
+        event_metadata={"link_id": str(link.id)},
+    )
+
     return link
 
 
@@ -100,3 +129,22 @@ def record_link_download(db: Session, link: ShareLink) -> None:
     db.add(link)
     db.add(Download(file_id=link.file_id, share_link_id=link.id, user_id=None))
     db.commit()
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.PUBLIC_LINK_DOWNLOADED,
+        entity_type="file",
+        entity_id=str(link.file_id),
+        severity="info",
+        event_metadata={"link_id": str(link.id)},
+    )
+
+    file = link.file
+    create_notification(
+        db=db,
+        user_id=file.owner_id,
+        notification_type=NotificationType.FILE_DOWNLOADED,
+        title="Your file was downloaded via a share link",
+        message=f"'{file.original_name}' was downloaded through a public share link.",
+        link_url="/dashboard/activity",
+    )

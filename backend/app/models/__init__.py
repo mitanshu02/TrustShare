@@ -13,3 +13,5 @@ from app.models.download import Download
 from app.models.password_reset_otp import PasswordResetOTP
 from app.models.file_encryption_key import FileEncryptionKey
 from app.models.role_change_audit import RoleChangeAudit
+from app.models.audit_event import AuditEvent
+from app.models.notification import Notification

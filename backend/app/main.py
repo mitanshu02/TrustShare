@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,8 +10,18 @@ from app.api.routes.files import router as files_router
 from app.api.routes.folders import router as folders_router
 from app.api.routes.share_links import router as share_links_router
 from app.api.routes.stats import router as stats_router
+from app.api.routes.monitoring import router as monitoring_router
+from app.core.scheduler import start_scheduler, stop_scheduler
 
-app = FastAPI(title="TrustShare API")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    start_scheduler()
+    yield
+    stop_scheduler()
+
+
+app = FastAPI(title="TrustShare API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,7 +38,7 @@ app.include_router(activity_router)
 app.include_router(stats_router)
 app.include_router(admin_router)
 app.include_router(share_links_router)
-
+app.include_router(monitoring_router)
 
 @app.get("/health")
 def health_check():
