@@ -1,0 +1,26 @@
+# Local, full-stack Docker run. Both services still point at your real
+# Neon database and B2 bucket via the root .env — this does not stand
+# up a local Postgres, matching how the team already works (fully on
+# Neon, no local Postgres/Docker DB per the project handoff notes).
+#
+# Usage:
+#   docker compose up --build
+#   Backend:  http://localhost:8000/docs
+#   Frontend: http://localhost:5173
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./.env
+    environment:
+      - PORT=8000
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend

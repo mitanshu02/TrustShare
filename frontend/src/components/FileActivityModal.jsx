@@ -21,7 +21,7 @@ function describe(event) {
 }
 
 export default function FileActivityModal({ file, onClose }) {
-  const [activity, setActivity] = useState([]);
+  const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,7 +30,7 @@ export default function FileActivityModal({ file, onClose }) {
     async function load() {
       try {
         const data = await getFileActivityReport(file.id);
-        if (!cancelled) setActivity(data.activity);
+        if (!cancelled) setReport(data);
       } catch {
         if (!cancelled) setError("Couldn't load this file's activity.");
       } finally {
@@ -42,6 +42,8 @@ export default function FileActivityModal({ file, onClose }) {
       cancelled = true;
     };
   }, [file.id]);
+
+  const activity = report?.events || [];
 
   return (
     <div className="share-modal__backdrop" onClick={onClose}>
@@ -55,6 +57,31 @@ export default function FileActivityModal({ file, onClose }) {
 
         {error && <div className="share-modal__error">{error}</div>}
         {loading && <p className="share-modal__muted">Loading…</p>}
+
+        {report && (
+          <div
+            style={{
+              display: "flex",
+              gap: "1.5rem",
+              marginBottom: "1rem",
+              paddingBottom: "0.9rem",
+              borderBottom: "1px solid var(--border)",
+            }}
+          >
+            <div>
+              <strong style={{ fontSize: "1.1rem" }}>{report.total_events}</strong>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Total events</div>
+            </div>
+            <div>
+              <strong style={{ fontSize: "1.1rem" }}>{report.downloads}</strong>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Downloads</div>
+            </div>
+            <div>
+              <strong style={{ fontSize: "1.1rem" }}>{report.temporary_links}</strong>
+              <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Temporary links</div>
+            </div>
+          </div>
+        )}
 
         {!loading && activity.length === 0 && (
           <p className="share-modal__muted">No recorded activity for this file yet.</p>

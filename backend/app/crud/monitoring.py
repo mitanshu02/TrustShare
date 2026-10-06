@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 import uuid
 
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.core.events import EventType, NotificationType, SEVERITY_HIGH
@@ -168,6 +168,24 @@ def detect_repeated_failed_logins(
         link_url="/dashboard/admin",
     )
 
+    # Also tell the account being targeted, if the attempted email belongs
+    # to a real user — they're the one best placed to know someone is
+    # trying to break into their account right now.
+    targeted_user = db.query(User).filter(User.email == email).first()
+    if targeted_user is not None:
+        create_notification(
+            db=db,
+            user_id=targeted_user.id,
+            notification_type=NotificationType.SECURITY_ALERT,
+            title="Multiple failed login attempts on your account",
+            message=(
+                f"{count} failed login attempts were made on your account in the "
+                f"last {FAILED_LOGIN_WINDOW_MINUTES} minutes from IP {ip_address}. "
+                "If this wasn't you, consider changing your password."
+            ),
+            link_url="/dashboard/activity",
+        )
+
     return True
 
 
@@ -298,12 +316,15 @@ def get_security_analytics(db: Session) -> dict:
     }
 
 
-def get_file_activity_report(db: Session, file_id: uuid.UUID) -> list[dict]:
+def get_file_activity_report(db: Session, file_id: uuid.UUID) -> dict:
     """
     Full audit trail for a single file: uploads, downloads, shares,
     permission changes, key rotations, share-link activity — anything
-    logged with entity_type='file' and this file's id. Ordered oldest
-    first, so it reads like a timeline.
+    logged with entity_type='file' and this file's id. Events are
+    ordered oldest first, so the list reads like a timeline, and a
+    small summary (total events, downloads, temporary links created)
+    is included so the report doesn't require reading the whole list
+    to answer the obvious first questions.
     """
     events = (
         db.query(AuditEvent)
@@ -319,18 +340,27 @@ def get_file_activity_report(db: Session, file_id: uuid.UUID) -> list[dict]:
         else {}
     )
 
-    return [
-        {
-            "id": str(event.id),
-            "event_type": event.event_type,
-            "severity": event.severity,
-            "actor_email": actors.get(event.actor_user_id),
-            "ip_address": event.ip_address,
-            "created_at": event.created_at,
-            "event_metadata": event.event_metadata,
-        }
-        for event in events
-    ]
+    download_events = {EventType.FILE_DOWNLOADED, EventType.PUBLIC_LINK_DOWNLOADED}
+    downloads = sum(1 for e in events if e.event_type in download_events)
+    temporary_links = sum(1 for e in events if e.event_type == EventType.SHARE_LINK_CREATED)
+
+    return {
+        "total_events": len(events),
+        "downloads": downloads,
+        "temporary_links": temporary_links,
+        "events": [
+            {
+                "id": str(event.id),
+                "event_type": event.event_type,
+                "severity": event.severity,
+                "actor_email": actors.get(event.actor_user_id),
+                "ip_address": event.ip_address,
+                "created_at": event.created_at,
+                "event_metadata": event.event_metadata,
+            }
+            for event in events
+        ],
+    }
 
 
 def get_storage_analytics(db: Session, owner_id: uuid.UUID) -> dict:
@@ -442,3 +472,118 @@ def check_expiring_share_links(db: Session) -> int:
         sent += 1
 
     return sent
+
+
+def get_audit_log_for_user(
+    db: Session,
+    user_id: uuid.UUID,
+    event_type: str | None = None,
+    q: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+    limit: int = 100,
+    offset: int = 0,
+) -> dict:
+    """
+    A searchable, filterable audit trail scoped to one user: things
+    they did (actor), things done to them (target), and activity on
+    files they own (so they see who downloaded/shared/revoked access
+    to their own files, not only their own actions).
+
+    Filters are applied at the database level (not after fetching a
+    page), so `q`/date-range/event-type combined with limit/offset
+    paginate correctly instead of silently under-returning matches
+    that fall outside the current page.
+    """
+    owned_file_ids = [
+        str(fid) for (fid,) in db.query(File.id).filter(File.owner_id == user_id).all()
+    ]
+
+    scope = or_(
+        AuditEvent.actor_user_id == user_id,
+        AuditEvent.target_user_id == user_id,
+    )
+    if owned_file_ids:
+        scope = or_(
+            scope,
+            (AuditEvent.entity_type == "file") & AuditEvent.entity_id.in_(owned_file_ids),
+        )
+
+    query = db.query(AuditEvent).filter(scope)
+
+    if event_type:
+        query = query.filter(AuditEvent.event_type == event_type)
+    if date_from:
+        query = query.filter(AuditEvent.created_at >= date_from)
+    if date_to:
+        query = query.filter(AuditEvent.created_at <= date_to)
+
+    if q:
+        matching_file_ids = [
+            str(fid)
+            for (fid,) in db.query(File.id)
+            .filter(File.id.in_([uuid.UUID(fid) for fid in owned_file_ids]) if owned_file_ids else False)
+            .filter(File.original_name.ilike(f"%{q}%"))
+            .all()
+        ] if owned_file_ids else []
+
+        text_filter = AuditEvent.event_type.ilike(f"%{q}%")
+        if matching_file_ids:
+            text_filter = or_(
+                text_filter,
+                (AuditEvent.entity_type == "file") & AuditEvent.entity_id.in_(matching_file_ids),
+            )
+        query = query.filter(text_filter)
+
+    total = query.count()
+
+    events = (
+        query.order_by(AuditEvent.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+
+    actor_ids = {e.actor_user_id for e in events if e.actor_user_id is not None}
+    actors = (
+        {u.id: u.email for u in db.query(User).filter(User.id.in_(actor_ids)).all()}
+        if actor_ids
+        else {}
+    )
+
+    file_ids_needed: set[uuid.UUID] = set()
+    for e in events:
+        if e.entity_type == "file" and e.entity_id:
+            try:
+                file_ids_needed.add(uuid.UUID(e.entity_id))
+            except ValueError:
+                pass
+    files = (
+        {f.id: f.original_name for f in db.query(File).filter(File.id.in_(file_ids_needed)).all()}
+        if file_ids_needed
+        else {}
+    )
+
+    rows = []
+    for e in events:
+        file_name = None
+        if e.entity_type == "file" and e.entity_id:
+            try:
+                file_name = files.get(uuid.UUID(e.entity_id))
+            except ValueError:
+                file_name = None
+
+        rows.append(
+            {
+                "id": str(e.id),
+                "event_type": e.event_type,
+                "severity": e.severity,
+                "actor_email": actors.get(e.actor_user_id),
+                "file_name": file_name,
+                "ip_address": e.ip_address,
+                "created_at": e.created_at,
+                "event_metadata": e.event_metadata,
+            }
+        )
+
+    return {"total": total, "limit": limit, "offset": offset, "events": rows}

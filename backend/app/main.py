@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes.activity import router as activity_router
 from app.api.routes.admin import router as admin_router
+from app.api.routes.audit_log import router as audit_log_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.files import router as files_router
 from app.api.routes.folders import router as folders_router
@@ -39,6 +40,7 @@ app.include_router(stats_router)
 app.include_router(admin_router)
 app.include_router(share_links_router)
 app.include_router(monitoring_router)
+app.include_router(audit_log_router)
 
 @app.get("/health")
 def health_check():

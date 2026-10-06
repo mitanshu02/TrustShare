@@ -187,12 +187,13 @@ def file_activity_report_endpoint(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> dict:
-    """Slide 7: full audit trail for one file. Owner-only."""
+    """Slide 7: full audit trail for one file, with summary counts. Owner-only."""
     file, _ = _require_file_and_access(db, file_id, current_user, {"owner"})
+    report = get_file_activity_report(db, file_id)
     return {
         "file_id": str(file.id),
         "file_name": file.original_name,
-        "activity": get_file_activity_report(db, file_id),
+        **report,
     }
 
 
