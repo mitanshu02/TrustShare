@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -24,9 +25,19 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="TrustShare API", lifespan=lifespan)
 
+# Local dev origin is always allowed. The deployed frontend's origin is
+# added via FRONTEND_URL so the live site works without hardcoding a
+# URL that doesn't exist until Render assigns it — set this env var on
+# Render once you know your frontend's real URL (e.g.
+# https://trustshare-frontend-xxxx.onrender.com, no trailing slash).
+allowed_origins = ["http://localhost:5173"]
+frontend_url = os.environ.get("FRONTEND_URL")
+if frontend_url:
+    allowed_origins.append(frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
