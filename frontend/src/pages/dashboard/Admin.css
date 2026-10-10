@@ -34,5 +34,5 @@
 .admin-badge--inactive,
 .admin-badge--locked {
   background: var(--danger-soft);
-  color: #e79684;
+  color: var(--danger);
 }

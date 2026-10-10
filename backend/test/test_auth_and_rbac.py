@@ -118,3 +118,46 @@ def test_suspicious_login_alert_is_not_duplicated_on_every_further_attempt(
         n for n in notifications if n["notification_type"] == "security_alert"
     ]
     assert len(security_alerts) == 1
+
+
+def test_user_can_update_their_display_name(client, unique_email):
+    register(client, unique_email)
+    token = login(client, unique_email)
+
+    response = client.patch(
+        "/api/auth/me", json={"full_name": "Renamed User"}, headers=auth_headers(token)
+    )
+    assert response.status_code == 200
+    assert response.json()["full_name"] == "Renamed User"
+
+    me = client.get("/api/auth/me", headers=auth_headers(token)).json()
+    assert me["full_name"] == "Renamed User"
+
+
+def test_change_password_rejects_wrong_current_password(client, unique_email):
+    register(client, unique_email)
+    token = login(client, unique_email)
+
+    response = client.post(
+        "/api/auth/change-password",
+        json={"current_password": "NotMyPassword1!", "new_password": "BrandNewPass123!"},
+        headers=auth_headers(token),
+    )
+    assert response.status_code == 401
+
+
+def test_change_password_takes_effect_immediately(client, unique_email):
+    register(client, unique_email)
+    token = login(client, unique_email)
+
+    response = client.post(
+        "/api/auth/change-password",
+        json={"current_password": "Password123!", "new_password": "BrandNewPass123!"},
+        headers=auth_headers(token),
+    )
+    assert response.status_code == 200
+
+    old = client.post("/api/auth/login", json={"email": unique_email, "password": "Password123!"})
+    assert old.status_code == 401
+    new = client.post("/api/auth/login", json={"email": unique_email, "password": "BrandNewPass123!"})
+    assert new.status_code == 200

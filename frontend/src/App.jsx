@@ -13,6 +13,8 @@ import PublicShare from "./pages/PublicShare";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
 import Notifications from "./pages/dashboard/Notifications";
+import Profile from "./pages/dashboard/Profile";
+import Settings from "./pages/dashboard/Settings";
 function App() {
   return (
     <Routes>
@@ -35,6 +37,8 @@ function App() {
         <Route path="activity" element={<Activity />} />
         <Route path="/dashboard/notifications" element={<Notifications />} />
         <Route path="stats" element={<Statistics />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="settings" element={<Settings />} />
         <Route
           path="admin"
           element={

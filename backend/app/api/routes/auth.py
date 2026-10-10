@@ -17,10 +17,12 @@ from app.crud.user import create_user, get_user_by_email, update_password
 from app.db.session import get_db
 from app.models.user import User
 from app.schemas.user import (
+    ChangePasswordRequest,
     ForgotPasswordRequest,
     MessageResponse,
     ResetPasswordRequest,
     Token,
+    UpdateProfileRequest,
     UserCreate,
     UserLogin,
     UserOut,
@@ -95,6 +97,7 @@ def login(
         create_audit_event(
             db=db,
             event_type=EventType.LOGIN_FAILED,
+            target_user_id=user.id if user else None,
             severity="warning",
             ip_address=ip_address,
             event_metadata={"email_attempted": credentials.email},
@@ -158,6 +161,58 @@ def read_current_user(
 ) -> User:
     """Protected endpoint used to verify JWT authentication."""
     return current_user
+
+
+@router.patch("/me", response_model=UserOut)
+def update_profile(
+    payload: UpdateProfileRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> User:
+    current_user.full_name = payload.full_name
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+@router.post("/change-password", response_model=MessageResponse)
+def change_password(
+    payload: ChangePasswordRequest,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> MessageResponse:
+    if not verify_password(payload.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect.",
+        )
+
+    update_password(db, current_user, payload.new_password)
+
+    create_audit_event(
+        db=db,
+        event_type=EventType.PASSWORD_RESET_SUCCESS,
+        actor_user_id=current_user.id,
+        target_user_id=current_user.id,
+        entity_type="user",
+        entity_id=str(current_user.id),
+        severity="info",
+        ip_address=get_client_ip(request),
+        event_metadata={"method": "change_password"},
+    )
+
+    create_notification(
+        db=db,
+        user_id=current_user.id,
+        notification_type=NotificationType.SECURITY_ALERT,
+        title="Your password was changed",
+        message="Your account password was just changed. If this wasn't you, reset it immediately.",
+        link_url="/dashboard/profile",
+    )
+
+    return MessageResponse(message="Password changed successfully.")
 
 
 @router.post("/forgot-password", response_model=MessageResponse)

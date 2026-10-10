@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getActivity } from "../../api/files";
-import { exportAuditLog, getAuditLog } from "../../api/auditLog";
+import { exportAuditLog, getAuditLog, getSecurityStatus } from "../../api/auditLog";
 import "./Activity.css";
 
 function describeEvent(event) {
@@ -55,9 +55,74 @@ const EVENT_TYPE_OPTIONS = [
   { value: "public_link_downloaded", label: "Link download" },
 ];
 
+const CATEGORY_TABS = [
+  { value: "all", label: "All" },
+  { value: "uploads", label: "Uploads" },
+  { value: "downloads", label: "Downloads" },
+  { value: "shares", label: "Shares" },
+  { value: "security", label: "Security" },
+];
+
+function SecurityStatusCard() {
+  const [status, setStatus] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSecurityStatus()
+      .then((data) => {
+        if (!cancelled) setStatus(data);
+      })
+      .catch(() => {
+        // Non-critical widget — fail quietly rather than blocking the page.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!status) return null;
+
+  const isSuspicious = status.suspicious_activity;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "0.9rem",
+        padding: "0.9rem 1.1rem",
+        borderRadius: "10px",
+        border: `1px solid ${isSuspicious ? "var(--danger)" : "var(--border)"}`,
+        background: isSuspicious ? "var(--danger-soft)" : "var(--surface)",
+        marginBottom: "1.5rem",
+      }}
+    >
+      <span
+        style={{
+          width: "10px",
+          height: "10px",
+          borderRadius: "50%",
+          background: isSuspicious ? "var(--danger)" : "var(--teal)",
+          flexShrink: 0,
+        }}
+      />
+      <div>
+        <strong style={{ fontSize: "0.9rem" }}>
+          {isSuspicious ? "Suspicious activity detected" : "No suspicious activity detected"}
+        </strong>
+        <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+          {status.failed_logins_15m} failed login attempt(s) in the last 15 minutes
+          {isSuspicious && status.reason ? ` · ${status.reason}` : ""}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function AuditLogSection() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
+  const [category, setCategory] = useState("all");
   const [q, setQ] = useState("");
   const [eventType, setEventType] = useState("");
   const [dateFrom, setDateFrom] = useState("");
@@ -65,11 +130,12 @@ function AuditLogSection() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  async function load() {
+  async function load(activeCategory = category) {
     setLoading(true);
     setError("");
     try {
       const data = await getAuditLog({
+        category: activeCategory !== "all" ? activeCategory : undefined,
         q: q || undefined,
         eventType: eventType || undefined,
         dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
@@ -90,6 +156,11 @@ function AuditLogSection() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleTabClick(value) {
+    setCategory(value);
+    load(value);
+  }
+
   function handleSearch(e) {
     e.preventDefault();
     load();
@@ -98,6 +169,7 @@ function AuditLogSection() {
   async function handleExport() {
     try {
       await exportAuditLog({
+        category: category !== "all" ? category : undefined,
         q: q || undefined,
         eventType: eventType || undefined,
         dateFrom: dateFrom ? new Date(dateFrom).toISOString() : undefined,
@@ -142,6 +214,28 @@ function AuditLogSection() {
         >
           Export CSV
         </button>
+      </div>
+
+      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1rem" }}>
+        {CATEGORY_TABS.map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            onClick={() => handleTabClick(tab.value)}
+            style={{
+              background: category === tab.value ? "var(--gold)" : "transparent",
+              color: category === tab.value ? "var(--on-gold)" : "var(--text)",
+              border: "1px solid var(--border)",
+              borderRadius: "999px",
+              padding: "0.35rem 0.9rem",
+              fontSize: "0.8rem",
+              fontWeight: category === tab.value ? 600 : 400,
+              cursor: "pointer",
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <form
@@ -211,7 +305,7 @@ function AuditLogSection() {
           style={{
             background: "var(--gold)",
             border: "none",
-            color: "#1a1a1a",
+            color: "var(--on-gold)",
             fontWeight: 600,
             borderRadius: "8px",
             padding: "0.5rem 1.1rem",
@@ -288,6 +382,8 @@ export default function Activity() {
   return (
     <div>
       <h1 style={{ fontSize: "1.3rem", marginBottom: "1.5rem" }}>Activity</h1>
+
+      <SecurityStatusCard />
 
       {error && <div className="myfiles__error">{error}</div>}
 

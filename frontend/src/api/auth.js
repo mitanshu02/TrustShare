@@ -22,6 +22,19 @@ export async function fetchCurrentUser() {
   return response.data;
 }
 
+export async function updateProfile({ fullName }) {
+  const response = await apiClient.patch("/api/auth/me", { full_name: fullName });
+  return response.data;
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  const response = await apiClient.post("/api/auth/change-password", {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+  return response.data; // { message }
+}
+
 export async function forgotPassword({ email }) {
   const response = await apiClient.post("/api/auth/forgot-password", { email });
   return response.data; // { message }

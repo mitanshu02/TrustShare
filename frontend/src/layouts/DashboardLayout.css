@@ -108,3 +108,99 @@
   width: 100%;
   margin: 0 auto;
 }
+/* ---------- Account menu ---------- */
+.user-menu {
+  position: relative;
+}
+
+.user-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.8rem 0.25rem 0.3rem;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.user-menu__trigger:hover {
+  border-color: var(--gold);
+}
+
+.user-menu__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-soft);
+  border: 1px solid var(--gold-border);
+}
+
+.user-menu__name {
+  font-size: 0.85rem;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: 220px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.4rem;
+  z-index: 50;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.user-menu__header {
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 0.7rem 0.7rem;
+  margin-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.user-menu__header span {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.user-menu__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+
+.user-menu__item:hover {
+  background: var(--gold-soft);
+}
+
+.user-menu__item--danger {
+  color: var(--danger);
+}
+
+@media (max-width: 640px) {
+  .user-menu__name,
+  .dash-topbar__user {
+    display: none;
+  }
+}

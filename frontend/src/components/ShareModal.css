@@ -51,7 +51,7 @@
 .share-modal__error {
   background: var(--danger-soft);
   border: 1px solid var(--danger-border);
-  color: #e79684;
+  color: var(--danger);
   padding: 0.55rem 0.75rem;
   border-radius: 8px;
   font-size: 0.8rem;
@@ -154,7 +154,7 @@
 .share-modal__revoke {
   background: none;
   border: 1px solid var(--danger-border);
-  color: #e79684;
+  color: var(--danger);
   border-radius: 6px;
   padding: 0.3rem 0.6rem;
   font-size: 0.75rem;

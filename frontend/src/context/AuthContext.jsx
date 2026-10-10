@@ -46,6 +46,10 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  function updateUser(partialUser) {
+    setUser((current) => (current ? { ...current, ...partialUser } : current));
+  }
+
   const value = {
     user,
     isAuthenticated: Boolean(user),
@@ -53,6 +57,7 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -14,6 +14,7 @@
   --gold: #c9974c;
   --gold-soft: rgba(201, 151, 76, 0.14);
   --gold-border: rgba(201, 151, 76, 0.4);
+  --on-gold: #17120a;
   --teal: #4f9186;
   --teal-soft: rgba(79, 145, 134, 0.16);
 
@@ -37,6 +38,44 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Appearance: light mode ---------- */
+/* Same role names as the dark palette above, re-pointed to light values.
+   Everything that reads var(--ink)/var(--surface)/etc. adapts automatically —
+   no component needs to know which mode is active. */
+:root[data-theme="light"] {
+  --ink: #f6f3ec;
+  --surface: #ffffff;
+  --surface-raised: #fbf9f3;
+  --border: #ddd6c4;
+
+  --text: #211c14;
+  --text-muted: #6b6354;
+  --text-faint: #978d78;
+
+  color-scheme: light;
+}
+
+/* ---------- Appearance: accent variants ---------- */
+/* Curated, on-brand palette pairs — not a free color picker — so every
+   combination still reads as "secure document / seal", just a different mood. */
+:root[data-accent="indigo"] {
+  --gold: #5b6fd8;
+  --gold-soft: rgba(91, 111, 216, 0.14);
+  --gold-border: rgba(91, 111, 216, 0.4);
+  --on-gold: #ffffff;
+  --teal: #02c39a;
+  --teal-soft: rgba(2, 195, 154, 0.16);
+}
+
+:root[data-accent="crimson"] {
+  --gold: #b3542f;
+  --gold-soft: rgba(179, 84, 47, 0.14);
+  --gold-border: rgba(179, 84, 47, 0.4);
+  --on-gold: #ffffff;
+  --teal: #7a8471;
+  --teal-soft: rgba(122, 132, 113, 0.16);
 }
 
 * {
