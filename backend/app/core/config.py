@@ -35,6 +35,25 @@ class Settings(BaseSettings):
     B2_BUCKET_NAME: str
     B2_ENDPOINT_URL: str
 
+    # --- Monitoring / notifications (all optional) ---
+    # Only trust X-Forwarded-For when the API sits behind a reverse proxy
+    # you control (nginx, ALB...). Leave False for local development,
+    # otherwise clients could spoof their IP in audit logs.
+    TRUST_PROXY_HEADERS: bool = False
+
+    # Email delivery. If SMTP_HOST is empty, emails are written to the
+    # server log instead of being sent (development default).
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str = "TrustShare <no-reply@trustshare.local>"
+    SMTP_USE_TLS: bool = True
+
+    # Background job that raises "link expiring" reminders.
+    REMINDER_INTERVAL_MINUTES: int = 15
+    EXPIRY_REMINDER_HOURS: int = 24
+
     model_config = SettingsConfigDict(
         env_file="../.env",  # repo root .env, one level up from backend/
         env_file_encoding="utf-8",

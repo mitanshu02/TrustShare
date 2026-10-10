@@ -8,6 +8,7 @@ from app.crud.monitoring import (
     get_security_analytics,
     get_unread_notification_count,
     get_user_notifications,
+    get_user_security_status,
     mark_all_notifications_read,
     mark_notification_read,
 )
@@ -80,3 +81,17 @@ def security_analytics(
     db: Session = Depends(get_db),
 ):
     return get_security_analytics(db)
+
+
+@router.get("/security-status")
+def security_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Non-admin equivalent of the admin security-analytics endpoint,
+    scoped to the caller's own account: recent failed logins against
+    their account and whether that crossed the suspicious-activity
+    threshold in the last 15 minutes.
+    """
+    return get_user_security_status(db, current_user.id)

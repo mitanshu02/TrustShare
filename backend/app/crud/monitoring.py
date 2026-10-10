@@ -143,9 +143,12 @@ def detect_repeated_failed_logins(
     if count < FAILED_LOGIN_THRESHOLD:
         return False
 
+    targeted_user = db.query(User).filter(User.email == email).first()
+
     create_audit_event(
         db=db,
         event_type=EventType.SUSPICIOUS_LOGIN_ACTIVITY,
+        target_user_id=targeted_user.id if targeted_user else None,
         severity=SEVERITY_HIGH,
         ip_address=ip_address,
         event_metadata={
@@ -171,7 +174,6 @@ def detect_repeated_failed_logins(
     # Also tell the account being targeted, if the attempted email belongs
     # to a real user — they're the one best placed to know someone is
     # trying to break into their account right now.
-    targeted_user = db.query(User).filter(User.email == email).first()
     if targeted_user is not None:
         create_notification(
             db=db,
@@ -478,6 +480,7 @@ def get_audit_log_for_user(
     db: Session,
     user_id: uuid.UUID,
     event_type: str | None = None,
+    event_types: list[str] | None = None,
     q: str | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
@@ -513,6 +516,8 @@ def get_audit_log_for_user(
 
     if event_type:
         query = query.filter(AuditEvent.event_type == event_type)
+    if event_types:
+        query = query.filter(AuditEvent.event_type.in_(event_types))
     if date_from:
         query = query.filter(AuditEvent.created_at >= date_from)
     if date_to:
@@ -587,3 +592,40 @@ def get_audit_log_for_user(
         )
 
     return {"total": total, "limit": limit, "offset": offset, "events": rows}
+
+
+def get_user_security_status(db: Session, user_id: uuid.UUID) -> dict:
+    """
+    A per-user, non-admin view of the same suspicious-login signal the
+    admin dashboard sees platform-wide — scoped to attempts made
+    against this specific account, using the last 15-minute window.
+    """
+    since = datetime.now(timezone.utc) - timedelta(minutes=FAILED_LOGIN_WINDOW_MINUTES)
+
+    failed_logins = (
+        db.query(func.count(AuditEvent.id))
+        .filter(
+            AuditEvent.event_type == EventType.LOGIN_FAILED,
+            AuditEvent.target_user_id == user_id,
+            AuditEvent.created_at >= since,
+        )
+        .scalar()
+        or 0
+    )
+
+    latest_alert = (
+        db.query(AuditEvent)
+        .filter(
+            AuditEvent.event_type == EventType.SUSPICIOUS_LOGIN_ACTIVITY,
+            AuditEvent.target_user_id == user_id,
+            AuditEvent.created_at >= since,
+        )
+        .order_by(AuditEvent.created_at.desc())
+        .first()
+    )
+
+    return {
+        "failed_logins_15m": failed_logins,
+        "suspicious_activity": latest_alert is not None,
+        "reason": latest_alert.event_metadata.get("reason") if latest_alert else None,
+    }
